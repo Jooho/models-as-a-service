@@ -147,6 +147,8 @@ github.com/onsi/ginkgo/v2 v2.29.0 h1:rfh+ZFjgJhYWRoIqVf3Uwx/W20yLrcrE2h2GmYVRaag
 github.com/onsi/ginkgo/v2 v2.29.0/go.mod h1:+aXOY+vzZ5mu2iI2HpTZUPmM//oQfsNFX6gU9kNcA44=
 github.com/onsi/gomega v1.41.0 h1:OwKp4pXNgVxf6sCplzYo794OFNuoL2q2SBMU5NSWOjA=
 github.com/onsi/gomega v1.41.0/go.mod h1:M/Uqpu/8qTjtzCLUA2zJHX9Iilrau25x1PdoSRbWh5A=
+github.com/opendatahub-io/ai-gateway-controller v0.0.0-20261007034033-e2c3c95af4f1 h1:XE4D8lU7ZVH2lxgrFoWYn/YhIBwlnudEnI6IS7wAH6s=
+github.com/opendatahub-io/ai-gateway-controller v0.0.0-20261007034033-e2c3c95af4f1/go.mod h1:z4ZpPRzFtk5q1P0LMAJOi6ZIu/yYbrqBZL19h5HznRY=
 github.com/opendatahub-io/kserve v0.0.0-20260921025512-7d9d7b038cd4 h1:PVPKp9n1L4ZNFR+mbJggrRRhZZFXCDIBZOMc3asbto0=
 github.com/opendatahub-io/kserve v0.0.0-20260921025512-7d9d7b038cd4/go.mod h1:ULHiPbf4Cduu78t5ZRAOxcJvIJSIbWqzpOqB7Gy+05A=
 github.com/openshift/api v0.0.0-20260317165824-54a3998d81eb h1:iwBR3mzmyE3EMFx7R3CQ9lOccTS0dNht8TW82aGITg0=

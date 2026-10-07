@@ -9,6 +9,7 @@ require (
 	github.com/llm-d/llm-d-router v0.11.0
 	github.com/onsi/ginkgo/v2 v2.29.0
 	github.com/onsi/gomega v1.41.0
+	github.com/opendatahub-io/ai-gateway-controller v0.0.0-20261007034033-e2c3c95af4f1
 	github.com/openshift/api v0.0.0-20260317165824-54a3998d81eb
 	github.com/openshift/controller-runtime-common v0.0.0-20260428152732-64ee174f5e2e
 	github.com/stretchr/testify v1.11.1
