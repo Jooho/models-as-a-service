@@ -33,11 +33,8 @@ import (
 	maasv1alpha1 "github.com/opendatahub-io/models-as-a-service/maas-controller/api/maas/v1alpha1"
 )
 
-// Condition types evaluated by the resolver.
-const (
-	ConditionAccepted     = "Accepted"
-	ConditionResolvedRefs = "ResolvedRefs"
-)
+// ConditionAccepted is the authoritative policy acceptance condition.
+const ConditionAccepted = "Accepted"
 
 var (
 	// ErrPolicyNotFound: no AIGuardrail with that name in the tenant namespace.
@@ -48,6 +45,8 @@ var (
 	ErrNotAccepted = errors.New("guardrail policy not accepted")
 	// ErrStaleGeneration: a condition does not report the current generation.
 	ErrStaleGeneration = errors.New("guardrail policy status is stale")
+	// ErrBindingUnavailable: an accepted policy has no binding revision.
+	ErrBindingUnavailable = errors.New("guardrail policy binding unavailable")
 	// ErrUnknownCheck: a requested check name is not in the policy.
 	ErrUnknownCheck = errors.New("guardrail check not found in policy")
 	// ErrDuplicateCheck: the same check name is requested twice.
@@ -62,10 +61,11 @@ type Check struct {
 
 // Policy is the AIGuardrail data the resolver needs.
 type Policy struct {
-	Namespace  string
-	Name       string
-	UID        types.UID
-	Generation int64
+	Namespace       string
+	Name            string
+	UID             types.UID
+	Generation      int64
+	BindingRevision string
 	// Conditions holds the status conditions used to decide acceptance.
 	Conditions []PolicyCondition
 	// Checks holds every check in the policy spec, in spec order.
@@ -82,11 +82,12 @@ type PolicyCondition struct {
 // ResolvedPolicy is the resolver output: the policy identity and the selected
 // checks, in spec order.
 type ResolvedPolicy struct {
-	Namespace  string
-	Name       string
-	UID        types.UID
-	Generation int64
-	Checks     []Check
+	Namespace       string
+	Name            string
+	UID             types.UID
+	Generation      int64
+	BindingRevision string
+	Checks          []Check
 }
 
 // PolicyReader looks up an AIGuardrail by namespace and name. It reads the given
@@ -124,11 +125,12 @@ func (r *AttachmentResolver) Resolve(ctx context.Context, targetNamespace string
 	}
 
 	return &ResolvedPolicy{
-		Namespace:  policy.Namespace,
-		Name:       policy.Name,
-		UID:        policy.UID,
-		Generation: policy.Generation,
-		Checks:     selected,
+		Namespace:       policy.Namespace,
+		Name:            policy.Name,
+		UID:             policy.UID,
+		Generation:      policy.Generation,
+		BindingRevision: policy.BindingRevision,
+		Checks:          selected,
 	}, nil
 }
 
@@ -145,21 +147,23 @@ func (r *AttachmentResolver) ResolveAll(ctx context.Context, targetNamespace str
 	return out, nil
 }
 
-// checkAccepted verifies the required conditions for the current generation.
+// checkAccepted validates the current accepted binding.
 func checkAccepted(policy *Policy) error {
-	for _, condType := range []string{ConditionAccepted, ConditionResolvedRefs} {
-		cond := findCondition(policy.Conditions, condType)
-		if cond == nil {
-			return fmt.Errorf("policy %q condition %q is not True: %w", policy.Name, condType, ErrNotAccepted)
-		}
-		if cond.ObservedGeneration != policy.Generation {
-			return fmt.Errorf("policy %q condition %q observedGeneration %d does not match generation %d: %w",
-				policy.Name, condType, cond.ObservedGeneration, policy.Generation, ErrStaleGeneration)
-		}
-		if !cond.Status {
-			return fmt.Errorf("policy %q condition %q is not True: %w", policy.Name, condType, ErrNotAccepted)
-		}
+	cond := findCondition(policy.Conditions, ConditionAccepted)
+	if cond == nil {
+		return fmt.Errorf("policy %q condition %q is not True: %w", policy.Name, ConditionAccepted, ErrNotAccepted)
 	}
+	if cond.ObservedGeneration != policy.Generation {
+		return fmt.Errorf("policy %q condition %q observedGeneration %d does not match generation %d: %w",
+			policy.Name, ConditionAccepted, cond.ObservedGeneration, policy.Generation, ErrStaleGeneration)
+	}
+	if !cond.Status {
+		return fmt.Errorf("policy %q condition %q is not True: %w", policy.Name, ConditionAccepted, ErrNotAccepted)
+	}
+	if policy.BindingRevision == "" {
+		return fmt.Errorf("policy %q has no accepted binding revision: %w", policy.Name, ErrBindingUnavailable)
+	}
+
 	return nil
 }
 

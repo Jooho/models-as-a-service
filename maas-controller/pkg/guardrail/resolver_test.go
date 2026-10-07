@@ -47,20 +47,18 @@ func (f *fakeReader) GetPolicy(_ context.Context, namespace, name string) (*Poli
 	return f.policy, nil
 }
 
-func acceptedCond(condType string, gen int64) PolicyCondition {
-	return PolicyCondition{Type: condType, Status: true, ObservedGeneration: gen}
+func acceptedCondition(generation int64) PolicyCondition {
+	return PolicyCondition{Type: ConditionAccepted, Status: true, ObservedGeneration: generation}
 }
 
 func acceptedPolicy() *Policy {
 	return &Policy{
-		Namespace:  targetNS,
-		Name:       "safety",
-		UID:        types.UID("uid-1"),
-		Generation: 2,
-		Conditions: []PolicyCondition{
-			acceptedCond(ConditionAccepted, 2),
-			acceptedCond(ConditionResolvedRefs, 2),
-		},
+		Namespace:       targetNS,
+		Name:            "safety",
+		UID:             types.UID("uid-1"),
+		Generation:      2,
+		BindingRevision: "binding-revision-1",
+		Conditions:      []PolicyCondition{acceptedCondition(2)},
 		Checks: []Check{
 			{Name: "toxicity", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput}},
 			{Name: "pii", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput, aigatewayv1alpha1.GuardrailPhaseOutput}},
@@ -141,27 +139,18 @@ func TestResolver_Resolve(t *testing.T) {
 			name: "accepted condition missing",
 			policy: func() *Policy {
 				p := acceptedPolicy()
-				p.Conditions = []PolicyCondition{acceptedCond(ConditionResolvedRefs, 2)}
+				p.Conditions = nil
 				return p
 			}(),
 			attachment: attachment("safety"),
 			wantErr:    ErrNotAccepted,
 		},
 		{
-			name: "accepted condition false",
+			name: "false accepted condition precedes missing binding revision",
 			policy: func() *Policy {
 				p := acceptedPolicy()
 				p.Conditions[0].Status = false
-				return p
-			}(),
-			attachment: attachment("safety"),
-			wantErr:    ErrNotAccepted,
-		},
-		{
-			name: "resolvedrefs condition missing",
-			policy: func() *Policy {
-				p := acceptedPolicy()
-				p.Conditions = []PolicyCondition{acceptedCond(ConditionAccepted, 2)}
+				p.BindingRevision = ""
 				return p
 			}(),
 			attachment: attachment("safety"),
@@ -178,25 +167,26 @@ func TestResolver_Resolve(t *testing.T) {
 			wantErr:    ErrStaleGeneration,
 		},
 		{
-			name: "stale generation takes precedence over false status",
+			name: "stale accepted condition precedes status and binding errors",
 			policy: func() *Policy {
 				p := acceptedPolicy()
 				p.Conditions[0].Status = false
 				p.Conditions[0].ObservedGeneration = 1
+				p.BindingRevision = ""
 				return p
 			}(),
 			attachment: attachment("safety"),
 			wantErr:    ErrStaleGeneration,
 		},
 		{
-			name: "stale generation on resolvedrefs",
+			name: "accepted binding revision missing",
 			policy: func() *Policy {
 				p := acceptedPolicy()
-				p.Conditions[1].ObservedGeneration = 1
+				p.BindingRevision = ""
 				return p
 			}(),
 			attachment: attachment("safety"),
-			wantErr:    ErrStaleGeneration,
+			wantErr:    ErrBindingUnavailable,
 		},
 	}
 
@@ -229,9 +219,10 @@ func TestResolver_Resolve(t *testing.T) {
 				t.Fatalf("unexpected error: %v", err)
 			}
 			if got.Namespace != tt.policy.Namespace || got.Name != tt.policy.Name ||
-				got.UID != tt.policy.UID || got.Generation != tt.policy.Generation {
-				t.Errorf("identity mismatch: got %+v, want ns=%s name=%s uid=%s gen=%d",
-					got, tt.policy.Namespace, tt.policy.Name, tt.policy.UID, tt.policy.Generation)
+				got.UID != tt.policy.UID || got.Generation != tt.policy.Generation ||
+				got.BindingRevision != tt.policy.BindingRevision {
+				t.Errorf("identity mismatch: got %+v, want ns=%s name=%s uid=%s gen=%d bindingRevision=%s",
+					got, tt.policy.Namespace, tt.policy.Name, tt.policy.UID, tt.policy.Generation, tt.policy.BindingRevision)
 			}
 			if !reflect.DeepEqual(got.Checks, tt.wantChecks) {
 				t.Errorf("checks mismatch:\n got %+v\nwant %+v", got.Checks, tt.wantChecks)

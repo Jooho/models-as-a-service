@@ -54,9 +54,9 @@ func sampleAIGuardrail() *aigatewayv1alpha1.AIGuardrail {
 		},
 		Status: aigatewayv1alpha1.AIGuardrailStatus{
 			ObservedGeneration: 3,
+			BindingRevision:    "binding-revision-1",
 			Conditions: []metav1.Condition{
 				{Type: ConditionAccepted, Status: metav1.ConditionTrue, ObservedGeneration: 3, Reason: "PolicyAccepted"},
-				{Type: ConditionResolvedRefs, Status: metav1.ConditionFalse, ObservedGeneration: 3, Reason: "RefMissing"},
 			},
 		},
 	}
@@ -73,13 +73,13 @@ func TestClientReader_GetPolicy_Found(t *testing.T) {
 	}
 
 	want := &Policy{
-		Namespace:  targetNS,
-		Name:       "safety",
-		UID:        types.UID("uid-1"),
-		Generation: 3,
+		Namespace:       targetNS,
+		Name:            "safety",
+		UID:             types.UID("uid-1"),
+		Generation:      3,
+		BindingRevision: "binding-revision-1",
 		Conditions: []PolicyCondition{
 			{Type: ConditionAccepted, Status: true, ObservedGeneration: 3},
-			{Type: ConditionResolvedRefs, Status: false, ObservedGeneration: 3},
 		},
 		Checks: []Check{
 			{Name: "toxicity", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput}},
@@ -140,7 +140,6 @@ func TestClientReader_WithResolver_ConditionUnknown(t *testing.T) {
 	scheme := newGuardrailScheme(t)
 	g := sampleAIGuardrail()
 	g.Status.Conditions[0].Status = metav1.ConditionUnknown
-	g.Status.Conditions[1].Status = metav1.ConditionTrue
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(g).Build()
 
 	r := NewAttachmentResolver(NewPolicyReader(c))
@@ -153,7 +152,6 @@ func TestClientReader_WithResolver_ConditionUnknown(t *testing.T) {
 func TestClientReader_WithResolver(t *testing.T) {
 	scheme := newGuardrailScheme(t)
 	g := sampleAIGuardrail()
-	g.Status.Conditions[1].Status = metav1.ConditionTrue
 	c := fake.NewClientBuilder().WithScheme(scheme).WithObjects(g).Build()
 
 	r := NewAttachmentResolver(NewPolicyReader(c))
@@ -161,7 +159,7 @@ func TestClientReader_WithResolver(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if got.UID != types.UID("uid-1") || got.Generation != 3 {
+	if got.UID != types.UID("uid-1") || got.Generation != 3 || got.BindingRevision != "binding-revision-1" {
 		t.Errorf("identity mismatch: %+v", got)
 	}
 	if len(got.Checks) != 1 || got.Checks[0].Name != "pii" {

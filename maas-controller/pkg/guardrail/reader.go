@@ -76,11 +76,12 @@ func policyFromAIGuardrail(g *aigatewayv1alpha1.AIGuardrail) *Policy {
 	}
 
 	return &Policy{
-		Namespace:  g.Namespace,
-		Name:       g.Name,
-		UID:        g.UID,
-		Generation: g.Generation,
-		Conditions: conditions,
-		Checks:     checks,
+		Namespace:       g.Namespace,
+		Name:            g.Name,
+		UID:             g.UID,
+		Generation:      g.Generation,
+		BindingRevision: g.Status.BindingRevision,
+		Conditions:      conditions,
+		Checks:          checks,
 	}
 }
