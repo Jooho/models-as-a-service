@@ -60,8 +60,8 @@ func acceptedPolicy() *Policy {
 		BindingRevision: "binding-revision-1",
 		Conditions:      []PolicyCondition{acceptedCondition(2)},
 		Checks: []Check{
-			{Name: "toxicity", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput}},
-			{Name: "pii", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput, aigatewayv1alpha1.GuardrailPhaseOutput}},
+			{Name: "toxicity", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput}, SpecIndex: 0},
+			{Name: "pii", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput, aigatewayv1alpha1.GuardrailPhaseOutput}, SpecIndex: 1},
 		},
 	}
 }
@@ -83,11 +83,11 @@ func TestResolver_Resolve(t *testing.T) {
 		wantErr    error
 	}{
 		{
-			name:       "explicit subset",
+			name:       "explicit subset preserves original spec index",
 			policy:     acceptedPolicy(),
 			attachment: attachment("safety", "pii"),
 			wantChecks: []Check{
-				{Name: "pii", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput, aigatewayv1alpha1.GuardrailPhaseOutput}},
+				{Name: "pii", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput, aigatewayv1alpha1.GuardrailPhaseOutput}, SpecIndex: 1},
 			},
 		},
 		{
@@ -95,8 +95,8 @@ func TestResolver_Resolve(t *testing.T) {
 			policy:     acceptedPolicy(),
 			attachment: attachment("safety", "pii", "toxicity"),
 			wantChecks: []Check{
-				{Name: "toxicity", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput}},
-				{Name: "pii", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput, aigatewayv1alpha1.GuardrailPhaseOutput}},
+				{Name: "toxicity", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput}, SpecIndex: 0},
+				{Name: "pii", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput, aigatewayv1alpha1.GuardrailPhaseOutput}, SpecIndex: 1},
 			},
 		},
 		{

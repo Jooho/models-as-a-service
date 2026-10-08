@@ -57,6 +57,8 @@ var (
 type Check struct {
 	Name   string
 	Phases []aigatewayv1alpha1.GuardrailPhase
+	// SpecIndex is the check's position in AIGuardrail.spec.checks.
+	SpecIndex int
 }
 
 // Policy is the AIGuardrail data the resolver needs.
@@ -218,5 +220,5 @@ func copyChecks(checks []Check) []Check {
 func cloneCheck(c Check) Check {
 	phases := make([]aigatewayv1alpha1.GuardrailPhase, len(c.Phases))
 	copy(phases, c.Phases)
-	return Check{Name: c.Name, Phases: phases}
+	return Check{Name: c.Name, Phases: phases, SpecIndex: c.SpecIndex}
 }

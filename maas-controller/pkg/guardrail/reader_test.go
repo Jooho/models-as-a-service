@@ -82,8 +82,8 @@ func TestClientReader_GetPolicy_Found(t *testing.T) {
 			{Type: ConditionAccepted, Status: true, ObservedGeneration: 3},
 		},
 		Checks: []Check{
-			{Name: "toxicity", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput}},
-			{Name: "pii", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput, aigatewayv1alpha1.GuardrailPhaseOutput}},
+			{Name: "toxicity", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput}, SpecIndex: 0},
+			{Name: "pii", Phases: []aigatewayv1alpha1.GuardrailPhase{aigatewayv1alpha1.GuardrailPhaseInput, aigatewayv1alpha1.GuardrailPhaseOutput}, SpecIndex: 1},
 		},
 	}
 	if !reflect.DeepEqual(got, want) {

@@ -60,10 +60,10 @@ func (r *ClientPolicyReader) GetPolicy(ctx context.Context, namespace, name stri
 // policyFromAIGuardrail projects an AIGuardrail into a Policy.
 func policyFromAIGuardrail(g *aigatewayv1alpha1.AIGuardrail) *Policy {
 	checks := make([]Check, 0, len(g.Spec.Checks))
-	for _, c := range g.Spec.Checks {
+	for i, c := range g.Spec.Checks {
 		phases := make([]aigatewayv1alpha1.GuardrailPhase, len(c.Phases))
 		copy(phases, c.Phases)
-		checks = append(checks, Check{Name: c.Name, Phases: phases})
+		checks = append(checks, Check{Name: c.Name, Phases: phases, SpecIndex: i})
 	}
 
 	conditions := make([]PolicyCondition, 0, len(g.Status.Conditions))
