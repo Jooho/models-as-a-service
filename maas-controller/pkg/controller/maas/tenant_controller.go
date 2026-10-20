@@ -135,6 +135,8 @@ type TenantReconciler struct {
 // +kubebuilder:rbac:groups=authorization.k8s.io,resources=subjectaccessreviews,verbs=create
 // +kubebuilder:rbac:groups=maas.opendatahub.io,resources=maasmodelrefs,verbs=get;list;watch
 // +kubebuilder:rbac:groups=maas.opendatahub.io,resources=maassubscriptions,verbs=get;list;watch
+// aiguardrails: read by the maas-api guardrail resolver (aitenants/maastenantconfigs are covered by full-verb rules).
+// +kubebuilder:rbac:groups=aigateway.opendatahub.io,resources=aiguardrails,verbs=get;list;watch
 
 // Escalation-check mirror for payload-processing-reader ClusterRole — maas-controller must hold every verb it grants.
 // +kubebuilder:rbac:groups=inference.opendatahub.io,resources=externalmodels;externalproviders,verbs=get;list;watch;create;update
