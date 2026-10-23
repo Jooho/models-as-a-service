@@ -957,6 +957,9 @@ func TestMaaSAuthPolicyReconciler_EnsureBaseGatewayAuthPolicyDoesNotResolveGuard
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      maasv1alpha1.MaasTenantConfigInstanceName,
 			Namespace: tenantNamespace,
+			Labels: map[string]string{
+				tenantreconcile.LabelManagedByAITenant: "true",
+			},
 		},
 	}
 	c := fake.NewClientBuilder().

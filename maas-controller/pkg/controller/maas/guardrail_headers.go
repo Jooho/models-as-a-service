@@ -99,14 +99,8 @@ func (r *MaaSAuthPolicyReconciler) guardrailHeaders(ctx context.Context, tenantN
 		return nil, fmt.Errorf("get MaaSTenantConfig %s/%s: %w", tenantNamespace, maasv1alpha1.MaasTenantConfigInstanceName, err)
 	}
 
-	if !r.isDefaultTenantNamespace(tenantNamespace) {
-		managed, err := r.isAITenantManagedNamespace(ctx, tenantNamespace)
-		if err != nil {
-			return nil, err
-		}
-		if !managed {
-			return nil, nil
-		}
+	if !tenantreconcile.TenantUsesAITenantPlatformContext(tenantConfig) {
+		return nil, nil
 	}
 
 	aitenant, err := r.owningAITenant(ctx, tenantConfig)

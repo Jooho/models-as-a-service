@@ -53,6 +53,9 @@ func TestGuardrailHeaders_ComposesAllAttachmentScopes(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      maasv1alpha1.MaasTenantConfigInstanceName,
 				Namespace: tenantNamespace,
+				Labels: map[string]string{
+					tenantreconcile.LabelManagedByAITenant: "true",
+				},
 				Annotations: map[string]string{
 					tenantreconcile.AnnotationAITenantName:      "tenant-a",
 					tenantreconcile.AnnotationAITenantNamespace: "ai-tenants",
@@ -125,7 +128,9 @@ func TestGuardrailHeaders_DeduplicatesChecksAcrossSelectionScopes(t *testing.T) 
 			Status:     maasv1alpha1.AITenantStatus{TenantNamespace: tenantNamespace},
 		},
 		&maasv1alpha1.MaasTenantConfig{
-			ObjectMeta: metav1.ObjectMeta{Name: maasv1alpha1.MaasTenantConfigInstanceName, Namespace: tenantNamespace, Annotations: map[string]string{
+			ObjectMeta: metav1.ObjectMeta{Name: maasv1alpha1.MaasTenantConfigInstanceName, Namespace: tenantNamespace, Labels: map[string]string{
+				tenantreconcile.LabelManagedByAITenant: "true",
+			}, Annotations: map[string]string{
 				tenantreconcile.AnnotationAITenantName: "tenant-a", tenantreconcile.AnnotationAITenantNamespace: "ai-tenants",
 			}},
 			Spec: maasv1alpha1.MaasTenantConfigSpec{Guardrails: attachments},
@@ -164,7 +169,9 @@ func TestGuardrailHeaders_ReturnsNoPartialResultOnResolutionFailure(t *testing.T
 			Status:     maasv1alpha1.AITenantStatus{TenantNamespace: tenantNamespace},
 		},
 		&maasv1alpha1.MaasTenantConfig{ObjectMeta: metav1.ObjectMeta{
-			Name: maasv1alpha1.MaasTenantConfigInstanceName, Namespace: tenantNamespace, Annotations: map[string]string{
+			Name: maasv1alpha1.MaasTenantConfigInstanceName, Namespace: tenantNamespace, Labels: map[string]string{
+				tenantreconcile.LabelManagedByAITenant: "true",
+			}, Annotations: map[string]string{
 				tenantreconcile.AnnotationAITenantName: "tenant-a", tenantreconcile.AnnotationAITenantNamespace: "ai-tenants",
 			},
 		}},
@@ -261,7 +268,7 @@ func TestGuardrailHeaders_TenantOwnership(t *testing.T) {
 		wantHeaders int
 	}{
 		{
-			name:     "legacy tenant config skips catalog resolution",
+			name:     "discovery namespace config without managed label skips catalog resolution",
 			tenantNS: "legacy-tenant",
 			objects: []runtime.Object{
 				&corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "legacy-tenant", Labels: map[string]string{
@@ -281,7 +288,9 @@ func TestGuardrailHeaders_TenantOwnership(t *testing.T) {
 					tenantreconcile.LabelManagedByAITenant: "true",
 				}}},
 				&maasv1alpha1.MaasTenantConfig{ObjectMeta: metav1.ObjectMeta{
-					Name: maasv1alpha1.MaasTenantConfigInstanceName, Namespace: "managed-tenant",
+					Name: maasv1alpha1.MaasTenantConfigInstanceName, Namespace: "managed-tenant", Labels: map[string]string{
+						tenantreconcile.LabelManagedByAITenant: "true",
+					},
 				}},
 			},
 			wantErr: "missing owning AITenant annotations",
@@ -291,7 +300,9 @@ func TestGuardrailHeaders_TenantOwnership(t *testing.T) {
 			tenantNS: defaultNamespace,
 			objects: []runtime.Object{
 				&maasv1alpha1.MaasTenantConfig{ObjectMeta: metav1.ObjectMeta{
-					Name: maasv1alpha1.MaasTenantConfigInstanceName, Namespace: defaultNamespace,
+					Name: maasv1alpha1.MaasTenantConfigInstanceName, Namespace: defaultNamespace, Labels: map[string]string{
+						tenantreconcile.LabelManagedByAITenant: "true",
+					},
 				}},
 				&maasv1alpha1.AITenant{
 					ObjectMeta: metav1.ObjectMeta{Name: tenantreconcile.DefaultAITenantName, Namespace: tenantreconcile.DefaultAITenantNamespace},
